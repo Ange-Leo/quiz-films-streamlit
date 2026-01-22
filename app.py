@@ -45,7 +45,7 @@ st.markdown("""
         text-align: center;
     }
     </style>
-    """, unsafe_allow_stdio=True)
+    """, unsafe_allow_html=True)
 
 # --- CHARGEMENT ---
 @st.cache_data
@@ -177,3 +177,4 @@ if st.session_state.msg:
     if st.button("🔄 REJOUER UNE PARTIE"):
         st.session_state.msg = None
         st.rerun()
+
