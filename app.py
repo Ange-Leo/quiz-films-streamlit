@@ -4,57 +4,81 @@ import ast
 import random
 
 # --- CONFIGURATION LOOK & FEEL ---
-st.set_page_config(page_title="CinéQuiz Pro", page_icon="🎬", layout="wide")
+st.set_page_config(page_title="CinéMaster Quiz", page_icon="🎬", layout="wide")
 
-# CSS personnalisé pour un look "Waoh"
+# CSS "WAOH" : Dégradés, Néons et Cartes Modernes
 st.markdown("""
     <style>
-    .main {
-        background-color: #0e1117;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 10px;
-        height: 3em;
-        background-color: #e50914;
+    /* Fond dégradé moderne */
+    .stApp {
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
         color: white;
-        font-weight: bold;
+    }
+    
+    /* Titre stylisé */
+    .main-title {
+        font-size: 3.5rem !important;
+        font-weight: 900;
+        text-align: center;
+        background: -webkit-linear-gradient(#00d2ff, #3a7bd5);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 2rem;
+    }
+
+    /* Cartes d'indices */
+    .clue-box {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        backdrop-filter: blur(4px);
+        margin-bottom: 15px;
+        transition: transform 0.3s ease;
+    }
+    .clue-box:hover {
+        transform: translateY(-5px);
+        border: 1px solid #00d2ff;
+    }
+
+    /* Boutons personnalisés */
+    .stButton>button {
+        background: linear-gradient(90deg, #00d2ff 0%, #3a7bd5 100%);
+        color: white;
+        border-radius: 50px;
         border: none;
+        padding: 10px 20px;
+        font-weight: bold;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }
     .stButton>button:hover {
-        background-color: #ff0a16;
-        border: none;
+        box-shadow: 0 0 20px rgba(0, 210, 255, 0.6);
+        transform: scale(1.05);
     }
-    .clue-card {
-        background-color: #1e2130;
-        padding: 20px;
-        border-radius: 15px;
-        border-left: 5px solid #e50914;
-        margin-bottom: 10px;
-    }
-    .result-win {
-        color: #00ff00;
-        font-size: 30px;
-        font-weight: bold;
+
+    /* Message de succès/défaite */
+    .big-msg {
+        padding: 30px;
+        border-radius: 20px;
         text-align: center;
-    }
-    .result-lose {
-        color: #ff4b4b;
-        font-size: 30px;
+        font-size: 24px;
         font-weight: bold;
-        text-align: center;
+        margin-top: 20px;
     }
+    .win { background: rgba(0, 255, 127, 0.2); border: 2px solid #00ff7f; color: #00ff7f; }
+    .lose { background: rgba(255, 75, 75, 0.2); border: 2px solid #ff4b4b; color: #ff4b4b; }
     </style>
     """, unsafe_allow_html=True)
 
-# --- CHARGEMENT ---
+# --- CHARGEMENT DES DONNÉES (Identique) ---
 @st.cache_data
 def load_and_clean_data():
-    # 1. Chargement
     movies = pd.read_csv('movies.csv')
     credits = pd.read_parquet('credits.parquet')
     
-    # 2. Fonctions de nettoyage
     def get_cast(x):
         try:
             l = ast.literal_eval(x)
@@ -76,21 +100,17 @@ def load_and_clean_data():
             return ", ".join([g['name'] for g in l])
         except: return "Inconnu"
 
-    # 3. Application du nettoyage
     credits['char'], credits['actor'] = zip(*credits['cast'].apply(get_cast))
     credits['director'] = credits['crew'].apply(get_director)
-    
-    # --- LA LIGNE QUI MANQUAIT ÉTAIT ICI ---
     movies['genre_list'] = movies['genres'].apply(get_genres)
-    # ---------------------------------------
 
-    # 4. Fusion finale
     df = pd.merge(movies[['title', 'release_date', 'genre_list']], 
                   credits[['title', 'char', 'actor', 'director']], on='title')
     return df
+
 df = load_and_clean_data()
 
-# --- ETAT DU JEU ---
+# --- LOGIQUE DU JEU ---
 if 'game_active' not in st.session_state:
     st.session_state.game_active = False
 if 'msg' not in st.session_state:
@@ -104,91 +124,81 @@ def start_game(diff):
     st.session_state.game_active = True
     st.session_state.msg = None
 
-# --- UI ---
-st.title("🍿 CinéQuiz : Le Défi des 5000 Films")
+# --- INTERFACE ---
+st.markdown("<h1 class='main-title'>🎬 CINÉMASTER QUIZ</h1>", unsafe_allow_html=True)
 
 if not st.session_state.game_active:
-    st.markdown("### Prêt à tester votre culture cinéma ?")
-    st.write("Le film est choisi au hasard. Plus vous échouez, plus les indices deviennent précis.")
-    
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("🟢 FACILE (10 essais)"): start_game("Facile")
-    with col2:
-        if st.button("🟡 MOYEN (5 essais)"): start_game("Moyen")
-    with col3:
-        if st.button("🔴 DIFFICILE (3 essais)"): start_game("Difficile")
+    st.markdown("<div style='text-align: center; margin-bottom: 2rem;'><h3>Prêt pour le défi ? Sélectionnez votre niveau :</h3></div>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns(3)
+    with c1: 
+        if st.button("🟢 EXPLORATEUR (10 Vies)"): start_game("Facile")
+    with c2: 
+        if st.button("🟡 CINÉPHILE (5 Vies)"): start_game("Moyen")
+    with c3: 
+        if st.button("🔴 RÉALISATEUR (3 Vies)"): start_game("Difficile")
 
 else:
     film = st.session_state.target
     
-    # Header du jeu
-    col_score, col_progress = st.columns([1, 3])
-    with col_score:
-        st.metric("Vies", st.session_state.tries)
-    with col_progress:
-        prog = st.session_state.tries / st.session_state.max_tries
-        st.write("Santé du joueur")
-        st.progress(prog)
+    # Barre de progression dynamique
+    col_v, col_p = st.columns([1, 4])
+    with col_v:
+        st.write(f"❤️ **Vies : {st.session_state.tries}**")
+    with col_p:
+        pct = st.session_state.tries / st.session_state.max_tries
+        st.progress(pct)
 
-    st.markdown("---")
-
-    # Affichage des indices façon "Cartes"
-    st.markdown("#### 🔍 Indices débloqués")
+    st.markdown("### 🔍 VOS INDICES")
     shown = st.session_state.max_tries - st.session_state.tries
     
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown(f"<div class='clue-card'>🎬 <b>Réalisateur :</b><br>{film['director']}</div>", unsafe_allow_html=True)
+    # Grille d'indices
+    idx1, idx2 = st.columns(2)
+    with idx1:
+        st.markdown(f"<div class='clue-box'>🎥 <b>Réalisateur</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{film['director']}</span></div>", unsafe_allow_html=True)
         if shown >= 2:
-            st.markdown(f"<div class='clue-card'>🎭 <b>Acteur principal :</b><br>{film['actor']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='clue-box'>🌟 <b>Star</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{film['actor']}</span></div>", unsafe_allow_html=True)
         if shown >= 4:
-            st.markdown(f"<div class='clue-card'>🔡 <b>Première lettre :</b><br>{film['title'][0]}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='clue-box'>🔡 <b>Initiale</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{film['title'][0]}</span></div>", unsafe_allow_html=True)
 
-    with c2:
+    with idx2:
         if shown >= 1:
-            st.markdown(f"<div class='clue-card'>📅 <b>Année :</b><br>{str(film['release_date'])[:4]}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='clue-box'>📅 <b>Sortie</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{str(film['release_date'])[:4]}</span></div>", unsafe_allow_html=True)
         if shown >= 3:
-            st.markdown(f"<div class='clue-card'>🎭 <b>Rôle :</b><br>{film['char']}</div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='clue-box'>👤 <b>Personnage</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{film['char']}</span></div>", unsafe_allow_html=True)
+        if shown >= 5:
+            st.markdown(f"<div class='clue-box'>🎭 <b>Genres</b><br><span style='font-size: 1.2rem; color: #00d2ff;'>{film['genre_list']}</span></div>", unsafe_allow_html=True)
 
+    # Zone de saisie
     st.markdown("---")
-
-    # Input avec Suggestion (Plus interactif !)
-    st.write("Entrez le titre du film :")
-    user_guess = st.selectbox("Tapez ou choisissez le film :", [""] + sorted(df['title'].tolist()), label_visibility="collapsed")
+    user_guess = st.selectbox("QUEL EST LE TITRE DU FILM ?", [""] + sorted(df['title'].tolist()))
     
-    col_v, col_a = st.columns([1,1])
-    with col_v:
-        if st.button("🚀 VALIDER"):
+    bv, ba = st.columns(2)
+    with bv:
+        if st.button("⚡ VÉRIFIER"):
             if user_guess.lower().strip() == film['title'].lower().strip():
                 st.balloons()
-                st.session_state.msg = ("win", f"🏆 INCROYABLE ! C'était bien : {film['title']}")
+                st.session_state.msg = ("win", f"🏆 BRAVO ! C'était bien : {film['title']}")
                 st.session_state.game_active = False
                 st.rerun()
             else:
                 st.session_state.tries -= 1
                 if st.session_state.tries <= 0:
-                    st.session_state.msg = ("lose", f"💀 DOMMAGE... La réponse était : {film['title']}")
+                    st.session_state.msg = ("lose", f"💀 PERDU ! Le film était : {film['title']}")
                     st.session_state.game_active = False
                     st.rerun()
                 else:
-                    st.toast("Mauvaise réponse ! Un indice a été ajouté.", icon="❌")
+                    st.toast(f"Faux ! Il vous reste {st.session_state.tries} vies.", icon="🔥")
 
-    with col_a:
+    with ba:
         if st.button("🏳️ ABANDONNER"):
             st.session_state.game_active = False
             st.rerun()
 
-# Affichage des messages de fin
+# Messages de fin
 if st.session_state.msg:
-    type_msg, texte = st.session_state.msg
-    if type_msg == "win":
-        st.markdown(f"<p class='result-win'>{texte}</p>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<p class='result-lose'>{texte}</p>", unsafe_allow_html=True)
-    
-    if st.button("🔄 REJOUER UNE PARTIE"):
+    res_type, res_text = st.session_state.msg
+    css_class = "win" if res_type == "win" else "lose"
+    st.markdown(f"<div class='big-msg {css_class}'>{res_text}</div>", unsafe_allow_html=True)
+    if st.button("🎮 REJOUER"):
         st.session_state.msg = None
         st.rerun()
-
-
