@@ -50,9 +50,11 @@ st.markdown("""
 # --- CHARGEMENT ---
 @st.cache_data
 def load_and_clean_data():
+    # 1. Chargement
     movies = pd.read_csv('movies.csv')
     credits = pd.read_parquet('credits.parquet')
     
+    # 2. Fonctions de nettoyage
     def get_cast(x):
         try:
             l = ast.literal_eval(x)
@@ -68,13 +70,24 @@ def load_and_clean_data():
             return "Inconnu"
         except: return "Inconnu"
 
+    def get_genres(x):
+        try:
+            l = ast.literal_eval(x)
+            return ", ".join([g['name'] for g in l])
+        except: return "Inconnu"
+
+    # 3. Application du nettoyage
     credits['char'], credits['actor'] = zip(*credits['cast'].apply(get_cast))
     credits['director'] = credits['crew'].apply(get_director)
+    
+    # --- LA LIGNE QUI MANQUAIT ÉTAIT ICI ---
+    movies['genre_list'] = movies['genres'].apply(get_genres)
+    # ---------------------------------------
 
+    # 4. Fusion finale
     df = pd.merge(movies[['title', 'release_date', 'genre_list']], 
                   credits[['title', 'char', 'actor', 'director']], on='title')
     return df
-
 df = load_and_clean_data()
 
 # --- ETAT DU JEU ---
@@ -177,4 +190,5 @@ if st.session_state.msg:
     if st.button("🔄 REJOUER UNE PARTIE"):
         st.session_state.msg = None
         st.rerun()
+
 
