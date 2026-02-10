@@ -131,11 +131,11 @@ if not st.session_state.game_active:
     st.markdown("<div style='text-align: center; margin-bottom: 2rem;'><h3>Prêt pour le défi ? Sélectionnez votre niveau :</h3></div>", unsafe_allow_html=True)
     c1, c2, c3 = st.columns(3)
     with c1: 
-        if st.button("🟢 EXPLORATEUR (10 Vies)"): start_game("Facile")
+        if st.button("🟢 FACILE (10 Vies)"): start_game("Facile")
     with c2: 
-        if st.button("🟡 CINÉPHILE (5 Vies)"): start_game("Moyen")
+        if st.button("🟡 MOYEN (5 Vies)"): start_game("Moyen")
     with c3: 
-        if st.button("🔴 RÉALISATEUR (3 Vies)"): start_game("Difficile")
+        if st.button("🔴 DIFFICILE (3 Vies)"): start_game("Difficile")
 
 else:
     film = st.session_state.target
@@ -202,3 +202,4 @@ if st.session_state.msg:
     if st.button("🎮 REJOUER"):
         st.session_state.msg = None
         st.rerun()
+
